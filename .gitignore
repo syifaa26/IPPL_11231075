@@ -1,0 +1,39 @@
+# Large files and datasets
+API/archive/
+*.h5
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Model files
+*.pkl
+*.pth
+*.onnx
+*.pb
+
+# Dataset folders
+dataset/
+datasets/
+
+# Build files
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules
+node_modules/

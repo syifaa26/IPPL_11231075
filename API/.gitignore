@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Model Files (Too large for git)
+*.h5
+*.keras
+*.tflite
+*.pb
+*_savedmodel/
+food_detection_model*/
+
+# Dataset
+food-101.zip
+food101/
+*.zip
+
+# Kaggle
+.kaggle/
+
+# Training outputs
+training_history.png
+*.png
+*.jpg
+*.jpeg
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keep these files
+!README_TRAINING.md
+!SUMMARY.md
+!training.py
+!training_colab.py
+!requirements.txt
