@@ -18,46 +18,72 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    // imageData SUDAH base64 dari client, kirim langsung ke Gemini
-    const modelName = process.env.GENERATIVE_MODEL || "gemini-2.5-flash";
-
     // ---- Optimasi: Single Call Strategy (Vision + JSON) ----
-    // Menggabungkan Vision + JSON Parsing dalam 1 request untuk menghemat kuota (1 request vs 2 request)
-    const visionModel = genAI.getGenerativeModel({
-      model: modelName,
-      generationConfig: { responseMimeType: "application/json" } // Force JSON mode if supported
-    });
 
-    const prompt = `
-    Analisis gambar makanan ini dan berikan estimasi nutrisi secara detail.
-    
-    Output HARUS berupa JSON murni dengan format berikut:
-    {
-      "description": "Nama makanan singkat (contoh: Nasi Goreng)",
-      "foodDescription": "Deskripsi visual yang menjelaskan komposisi makanan (contoh: Nasi goreng kecokelatan dengan telur mata sapi dan irisan timun).",
-      "calories": 0, // estimasi kalori total (integer)
-      "protein": 0,  // gram (integer)
-      "carbs": 0,    // gram (integer)
-      "fat": 0,      // gram (integer)
-      "fiber": 0,    // gram (integer)
-      "sugar": 0,    // gram (integer)
-      "salt": 0      // gram (integer)
-    }
-    
-    Pastikan angka adalah estimasi yang realistis untuk 1 porsi standar yang terlihat di gambar.
-    `;
+    // Fungsi helper untuk generate content dengan retry/fallback
+    const generateWithFallback = async (primaryModelName, fallbackModelName) => {
+      let currentModelName = primaryModelName;
+      let model = genAI.getGenerativeModel({
+        model: currentModelName,
+        generationConfig: { responseMimeType: "application/json" }
+      });
 
-    const result = await visionModel.generateContent([
-      { text: prompt },
-      {
-        inlineData: {
-          data: imageData,
-          mimeType,
+      const prompt = `
+        Analisis gambar makanan ini dan berikan estimasi nutrisi secara detail.
+        
+        Output HARUS berupa JSON murni dengan format berikut:
+        {
+          "description": "Nama makanan singkat (contoh: Nasi Goreng)",
+          "foodDescription": "Deskripsi visual yang menjelaskan komposisi makanan (contoh: Nasi goreng kecokelatan dengan telur mata sapi dan irisan timun).",
+          "calories": 0, // estimasi kalori total (integer)
+          "protein": 0,  // gram (integer)
+          "carbs": 0,    // gram (integer)
+          "fat": 0,      // gram (integer)
+          "fiber": 0,    // gram (integer)
+          "sugar": 0,    // gram (integer)
+          "salt": 0      // gram (integer)
+        }
+        
+        Pastikan angka adalah estimasi yang realistis untuk 1 porsi standar yang terlihat di gambar.
+        `;
+
+      const requestParts = [
+        { text: prompt },
+        {
+          inlineData: {
+            data: imageData,
+            mimeType,
+          },
         },
-      },
-    ]);
+      ];
+
+      try {
+        console.log(`Trying model: ${currentModelName}`);
+        const result = await model.generateContent(requestParts);
+        return { result, usedModel: currentModelName };
+      } catch (error) {
+        // Jika error 429 (Rate Limit) dan ada fallback
+        if ((error.status === 429 || (error.message && error.message.includes("429"))) && fallbackModelName) {
+          console.warn(`Model ${currentModelName} limit. Switching to fallback: ${fallbackModelName}`);
+          currentModelName = fallbackModelName;
+          model = genAI.getGenerativeModel({
+            model: currentModelName,
+            generationConfig: { responseMimeType: "application/json" }
+          });
+          const result = await model.generateContent(requestParts);
+          return { result, usedModel: currentModelName };
+        }
+        throw error; // Lempar error jika bukan 429 atau retry gagal
+      }
+    };
+
+    const primaryModel = process.env.GENERATIVE_MODEL || "gemini-2.5-flash";
+    const fallbackModel = "gemini-1.5-flash"; // Model cadangan yang lebih stabil/cepat
+
+    const { result, usedModel } = await generateWithFallback(primaryModel, fallbackModel);
 
     const responseText = result.response.text();
+    const modelName = usedModel;
 
     // Parsing & Cleaning JSON
     let cleanedText = responseText
