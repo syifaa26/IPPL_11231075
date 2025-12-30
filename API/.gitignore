@@ -69,3 +69,7 @@ Thumbs.db
 !training.py
 !training_colab.py
 !requirements.txt
+
+# Node.js
+node_modules/
+.env
