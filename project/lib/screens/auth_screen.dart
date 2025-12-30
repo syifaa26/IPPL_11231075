@@ -294,6 +294,7 @@ class _AuthScreenState extends State<AuthScreen> {
           validator: validator,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          style: const TextStyle(color: Colors.black),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[500]),
@@ -521,6 +522,7 @@ class _AuthScreenState extends State<AuthScreen> {
               TextField(
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
                   hintText: 'Email Anda',
                   prefixIcon: const Icon(Icons.email_outlined),

@@ -12,29 +12,32 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _currentWeightController = TextEditingController();
+  final TextEditingController _currentWeightController =
+      TextEditingController();
   final TextEditingController _targetWeightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   String _gender = 'Laki-laki';
   DateTime _birthDate = DateTime(2000, 1, 1);
-  
+
   bool _isLoading = true;
-  
+
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
   }
-  
+
   void _loadUserProfile() {
     final authService = AuthService();
     final userId = authService.currentUser?.id ?? 'demo';
     final userDataService = UserDataService();
     final profile = userDataService.getUserProfile(userId);
-    
+
     if (profile != null) {
       setState(() {
-        _currentWeightController.text = profile.currentWeight.toStringAsFixed(1);
+        _currentWeightController.text = profile.currentWeight.toStringAsFixed(
+          1,
+        );
         _targetWeightController.text = profile.targetWeight.toStringAsFixed(1);
         _heightController.text = profile.height.toStringAsFixed(0);
         _gender = profile.gender;
@@ -47,7 +50,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       });
     }
   }
-  
+
   @override
   void dispose() {
     _currentWeightController.dispose();
@@ -55,28 +58,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _heightController.dispose();
     super.dispose();
   }
-  
+
   void _saveProfile() {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     final currentWeight = double.tryParse(_currentWeightController.text) ?? 0;
     final targetWeight = double.tryParse(_targetWeightController.text) ?? 0;
     final height = double.tryParse(_heightController.text) ?? 0;
-    
+
     if (currentWeight <= 0 || targetWeight <= 0 || height <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Mohon masukkan nilai yang valid')),
       );
       return;
     }
-    
+
     final authService = AuthService();
     final userId = authService.currentUser?.id ?? 'demo';
     final userDataService = UserDataService();
     final currentProfile = userDataService.getUserProfile(userId);
-    
+
     if (currentProfile != null) {
       // Update existing profile
       userDataService.saveUserProfile(
@@ -92,14 +95,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         exerciseFrequency: currentProfile.exerciseFrequency,
         dailyCaloriesTarget: currentProfile.dailyCaloriesTarget,
       );
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Profil berhasil diperbarui'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       Navigator.pop(context);
     }
   }
@@ -113,18 +116,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppColors.primaryGradient,
-          ),
+          decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
         ),
         actions: [
           TextButton(
             onPressed: _saveProfile,
             child: Text(
               'Simpan',
-              style: AppTextStyles.button.copyWith(
-                color: Colors.white,
-              ),
+              style: AppTextStyles.button.copyWith(color: Colors.white),
             ),
           ),
         ],
@@ -150,13 +149,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       style: AppTextStyles.body2,
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    
+
                     // Berat Badan Saat Ini
-                    Text('Berat Badan Saat Ini (kg)', style: AppTextStyles.body1),
+                    Text(
+                      'Berat Badan Saat Ini (kg)',
+                      style: AppTextStyles.body1,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _currentWeightController,
                       keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.black),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Wajib diisi';
@@ -169,24 +172,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       },
                       decoration: InputDecoration(
                         hintText: 'Contoh: 68',
-                        prefixIcon: Icon(Icons.monitor_weight_outlined, color: AppColors.primary),
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        prefixIcon: Icon(
+                          Icons.monitor_weight_outlined,
+                          color: AppColors.primary,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    
+
                     // Target Berat Badan
                     Text('Target Berat Badan (kg)', style: AppTextStyles.body1),
                     const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _targetWeightController,
                       keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.black),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Wajib diisi';
@@ -199,24 +210,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       },
                       decoration: InputDecoration(
                         hintText: 'Contoh: 65',
-                        prefixIcon: Icon(Icons.flag_outlined, color: AppColors.primary),
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        prefixIcon: Icon(
+                          Icons.flag_outlined,
+                          color: AppColors.primary,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    
+
                     // Tinggi Badan
                     Text('Tinggi Badan (cm)', style: AppTextStyles.body1),
                     const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _heightController,
                       keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.black),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Wajib diisi';
@@ -229,18 +248,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       },
                       decoration: InputDecoration(
                         hintText: 'Contoh: 170',
-                        prefixIcon: Icon(Icons.height_outlined, color: AppColors.primary),
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        prefixIcon: Icon(
+                          Icons.height_outlined,
+                          color: AppColors.primary,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    
+
                     // Jenis Kelamin
                     Text('Jenis Kelamin', style: AppTextStyles.body1),
                     const SizedBox(height: AppSpacing.sm),
@@ -256,7 +282,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    
+
                     // Tanggal Lahir
                     Text('Tanggal Lahir', style: AppTextStyles.body1),
                     const SizedBox(height: AppSpacing.sm),
@@ -286,7 +312,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             const SizedBox(width: AppSpacing.md),
                             Text(
                               '${_birthDate.day}/${_birthDate.month}/${_birthDate.year}',
-                              style: AppTextStyles.body1,
+                              style: AppTextStyles.body1.copyWith(
+                                color: Colors.black,
+                              ),
                             ),
                           ],
                         ),
@@ -298,7 +326,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
     );
   }
-  
+
   Widget _buildGenderButton(String gender, IconData icon) {
     final isSelected = _gender == gender;
     return InkWell(
@@ -328,7 +356,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Text(
               gender,
               style: AppTextStyles.body1.copyWith(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+                color: isSelected ? Colors.white : Colors.black,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),

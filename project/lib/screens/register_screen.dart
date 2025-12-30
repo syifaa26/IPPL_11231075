@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'onboarding_questionnaire.dart';
+import '../widgets/nutrix_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -37,9 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -52,20 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     padding: const EdgeInsets.only(bottom: 24),
                     child: Column(
                       children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: AppShadow.medium,
-                          ),
-                          child: const Icon(
-                            Icons.restaurant,
-                            size: 32,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                        const NutrixLogo(size: 80, showText: false),
                         const SizedBox(height: 16),
                         Text(
                           'Nutrix',
@@ -93,8 +79,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: AppShadow.large,
                     ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 28,
+                    ),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -186,8 +174,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Container(
                             decoration: BoxDecoration(
                               gradient: AppColors.primaryGradient,
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.md),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               boxShadow: AppShadow.medium,
                             ),
                             child: ElevatedButton(
@@ -200,7 +187,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
-                                      AppRadius.md),
+                                    AppRadius.md,
+                                  ),
                                 ),
                               ),
                               child: _isLoading
@@ -243,8 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     color: AppColors.textSecondary,
                                   ),
                                   children: [
-                                    const TextSpan(
-                                        text: 'Sudah punya akun? '),
+                                    const TextSpan(text: 'Sudah punya akun? '),
                                     TextSpan(
                                       text: 'Masuk',
                                       style: AppTextStyles.body2.copyWith(
@@ -297,6 +284,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           validator: validator,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          style: const TextStyle(color: Colors.black),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[500]),
@@ -312,8 +300,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: AppColors.primary, width: 2),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -321,13 +308,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: Colors.red, width: 2),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
             fillColor: Colors.grey[50],
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
           ),
         ),
       ],
@@ -338,7 +326,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (value == null || value.isEmpty) {
       return 'Email harus diisi';
     }
-      if (!RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}').hasMatch(value)) {
+    if (!RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}').hasMatch(value)) {
       return 'Format email tidak valid';
     }
     return null;
@@ -415,7 +403,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Email sudah terdaftar! Silakan masuk dengan akun Anda.'),
+            'Email sudah terdaftar! Silakan masuk dengan akun Anda.',
+          ),
           backgroundColor: Colors.orange,
           duration: Duration(seconds: 3),
         ),

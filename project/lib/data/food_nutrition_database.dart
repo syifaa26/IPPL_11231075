@@ -10,6 +10,7 @@ class FoodNutrition {
   final double fiber; // grams per 100g
   final String servingSize;
   final String category;
+  final String? description;
 
   FoodNutrition({
     required this.name,
@@ -20,6 +21,7 @@ class FoodNutrition {
     required this.fiber,
     required this.servingSize,
     required this.category,
+    this.description,
   });
 }
 
@@ -334,6 +336,7 @@ class FoodNutritionDatabase {
       fiber: 0.0,
       servingSize: '100g',
       category: 'API',
+      description: data['description'] as String?,
     );
     String key = rawName.toLowerCase().trim();
     key = key.replaceAll(RegExp(r'[^a-z0-9 ]'), ' ');

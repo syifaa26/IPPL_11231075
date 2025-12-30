@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/food_detection_service.dart';
+import '../services/nutrition_backend_service.dart';
 
 class FoodDetectionButton extends StatefulWidget {
   const FoodDetectionButton({super.key});
@@ -17,8 +17,6 @@ class _FoodDetectionButtonState extends State<FoodDetectionButton> {
   @override
   void initState() {
     super.initState();
-    // Initialize model saat widget pertama kali dimuat
-    FoodDetectionService.initialize();
   }
 
   Future<void> _pickAndDetectFood() async {
@@ -36,19 +34,23 @@ class _FoodDetectionButtonState extends State<FoodDetectionButton> {
         _isDetecting = true;
       });
 
-      // Deteksi makanan
-      final result = await FoodDetectionService.detectFood(File(image.path));
+      // Deteksi makanan via Backend
+      final result = await NutritionBackendService.analyzeImage(
+        File(image.path),
+      );
 
       setState(() {
         _isDetecting = false;
       });
 
       // Tampilkan hasil
-      if (result['success'] && mounted) {
+      if (result != null && mounted) {
         _showResultDialog(result);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${result['error']}')),
+          const SnackBar(
+            content: Text('Error: Gagal mendeteksi makanan via Backend.'),
+          ),
         );
       }
     } catch (e) {
@@ -56,16 +58,18 @@ class _FoodDetectionButtonState extends State<FoodDetectionButton> {
         _isDetecting = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   void _showResultDialog(Map<String, dynamic> result) {
-    final topPrediction = result['topPrediction'];
-    final allPredictions = result['allPredictions'] as List;
+    // Backend returns flat map: { description, calories, protein, carbs, fat, foodDescription }
+    final name = result['description'] ?? 'Unknown';
+    final calories = result['calories'] ?? 0;
+    final info = result['foodDescription'] ?? '';
 
     showDialog(
       context: context,
@@ -76,27 +80,23 @@ class _FoodDetectionButtonState extends State<FoodDetectionButton> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              topPrediction['name'],
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              name.toString(),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Confidence: ${topPrediction['confidence']}%',
+              'Kalori: $calories kkal',
               style: const TextStyle(fontSize: 16, color: Colors.green),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Other possibilities:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ...allPredictions.skip(1).map((pred) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Text('• ${pred['name']} (${pred['confidence']}%)'),
-                )),
+            if (info.toString().isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Info:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(info.toString()),
+            ],
           ],
         ),
         actions: [

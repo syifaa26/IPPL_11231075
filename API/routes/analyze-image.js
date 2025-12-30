@@ -21,90 +21,81 @@ router.post('/', auth, async (req, res) => {
     // imageData SUDAH base64 dari client, kirim langsung ke Gemini
     const modelName = process.env.GENERATIVE_MODEL || "gemini-2.5-flash";
 
-    // ---- 1. Vision: Kenali makanan ----
-    const visionModel = genAI.getGenerativeModel({ model: modelName });
-    const visionPrompt = `
-Analisis gambar ini. Sebutkan:
-1. Jenis makanan yang terlihat
-2. Porsi realistik
+    // ---- Optimasi: Single Call Strategy (Vision + JSON) ----
+    // Menggabungkan Vision + JSON Parsing dalam 1 request untuk menghemat kuota (1 request vs 2 request)
+    const visionModel = genAI.getGenerativeModel({
+      model: modelName,
+      generationConfig: { responseMimeType: "application/json" } // Force JSON mode if supported
+    });
 
-Format output hanya kalimat biasa tanpa bullet.
+    const prompt = `
+    Analisis gambar makanan ini dan berikan estimasi nutrisi secara detail.
+    
+    Output HARUS berupa JSON murni dengan format berikut:
+    {
+      "description": "Nama makanan singkat (contoh: Nasi Goreng)",
+      "foodDescription": "Deskripsi visual yang menjelaskan komposisi makanan (contoh: Nasi goreng kecokelatan dengan telur mata sapi dan irisan timun).",
+      "calories": 0, // estimasi kalori total (integer)
+      "protein": 0,  // gram (integer)
+      "carbs": 0,    // gram (integer)
+      "fat": 0,      // gram (integer)
+      "fiber": 0,    // gram (integer)
+      "sugar": 0,    // gram (integer)
+      "salt": 0      // gram (integer)
+    }
+    
+    Pastikan angka adalah estimasi yang realistis untuk 1 porsi standar yang terlihat di gambar.
     `;
 
-    const visionResult = await visionModel.generateContent([
-      { text: visionPrompt },
+    const result = await visionModel.generateContent([
+      { text: prompt },
       {
         inlineData: {
-          data: imageData, // base64 langsung
+          data: imageData,
           mimeType,
         },
       },
     ]);
 
-    const foodDescription = visionResult.response.text();
+    const responseText = result.response.text();
 
-
-    // ---- 2. Nutrisi: Analisis JSON nutrisi ----
-    const textModel = genAI.getGenerativeModel({ model: modelName });
-
-    const nutritionPrompt = `
-Anda ahli gizi. Berdasarkan deskripsi makanan ini:
-
-"${foodDescription}"
-
-Berikan nutrisi dalam FORMAT JSON KETAT:
-
-{
-  "description": "text singkat",
-  "calories": 0,
-  "protein": 0,
-  "carbs": 0,
-  "fat": 0,
-  "sugar": 0,
-  "salt": 0
-}
-
-Jangan beri teks lain, jangan gunakan tanda \`\`\`.
-    `;
-
-    const nutritionResult = await textModel.generateContent([{ text: nutritionPrompt }]);
-    let nutritionText = nutritionResult.response.text() || '';
-
-    // ---- 3. Bersihkan JSON ----
-    let cleanedText = nutritionText
+    // Parsing & Cleaning JSON
+    let cleanedText = responseText
       .replace(/```json/gi, '')
       .replace(/```/g, '')
       .trim();
-
-    const match = cleanedText.match(/\{[\s\S]*\}/);
-    if (!match) {
-      return res.status(500).json({
-        error: 'Gagal parsing respons nutrisi',
-        raw: nutritionText,
-      });
-    }
-
-    cleanedText = match[0];
 
     let jsonResponse;
     try {
       jsonResponse = JSON.parse(cleanedText);
     } catch (e) {
-      console.error('JSON parse error:', e, 'raw:', cleanedText);
-      return res.status(500).json({
-        error: 'Format JSON dari Gemini tidak valid',
-        raw: nutritionText,
-      });
+      // Fallback cleanup using regex if simple parse fails
+      const match = cleanedText.match(/\{[\s\S]*\}/);
+      if (match) {
+        jsonResponse = JSON.parse(match[0]);
+      } else {
+        console.error("Failed to parse JSON:", cleanedText);
+        throw new Error("Gagal parsing JSON dari respons Gemini");
+      }
     }
 
     res.json({
       ...jsonResponse,
-      foodDescription,
       model: modelName,
     });
 
   } catch (err) {
     console.error("Error detail:", err);
+
+    // Handle status 429 explicitly (Quota Exceeded)
+    if (err.status === 429 || (err.message && err.message.includes("429"))) {
+      return res.status(429).json({
+        error: "Quota Exceeded",
+        message: "Limit Gemini Free Tier habis (20 req/menit). Mohon tunggu sebentar.",
+        retryDelay: 10
+      });
+    }
+
     res.status(500).json({
       error: "Server Error",
       message: err.message

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'camera_permission_dialog.dart';
 import 'dart:io';
-import '../services/food_detection_service.dart';
+// import '../services/food_detection_service.dart'; // Removed as file is deleted
 import '../data/food_nutrition_database.dart';
 import '../services/user_data_service.dart';
 import '../services/auth_service.dart';
@@ -27,7 +27,8 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
   bool _isPermissionGranted = false;
   String? _errorMessage;
   bool _isDetecting = false; // overlay progress state
-  List<Map<String, dynamic>> _inlineResults = []; // fallback tampilan hasil jika bottom sheet gagal muncul
+  List<Map<String, dynamic>> _inlineResults =
+      []; // fallback tampilan hasil jika bottom sheet gagal muncul
 
   @override
   void initState() {
@@ -38,10 +39,13 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
   Future<void> _initializeCamera() async {
     try {
       // Check and request camera permission with custom dialog
-      final hasPermission = await CameraPermissionDialog.requestPermission(context);
+      final hasPermission = await CameraPermissionDialog.requestPermission(
+        context,
+      );
       if (!hasPermission) {
         setState(() {
-          _errorMessage = 'Izin kamera diperlukan untuk menggunakan fitur deteksi makanan.';
+          _errorMessage =
+              'Izin kamera diperlukan untuk menggunakan fitur deteksi makanan.';
           _isPermissionGranted = false;
         });
         return;
@@ -68,7 +72,7 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
       );
 
       await _controller!.initialize();
-      
+
       if (mounted) {
         setState(() {
           _isInitialized = true;
@@ -77,14 +81,16 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
     } on CameraException catch (e) {
       setState(() {
         if (e.code == 'CameraAccessDenied') {
-          _errorMessage = 'Akses kamera ditolak. Mohon izinkan akses kamera di pengaturan aplikasi.';
+          _errorMessage =
+              'Akses kamera ditolak. Mohon izinkan akses kamera di pengaturan aplikasi.';
         } else {
           _errorMessage = 'Error kamera: ${e.description ?? e.code}';
         }
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Gagal menginisialisasi kamera. Pastikan aplikasi memiliki izin kamera.';
+        _errorMessage =
+            'Gagal menginisialisasi kamera. Pastikan aplikasi memiliki izin kamera.';
       });
     }
   }
@@ -146,151 +152,69 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
 
     try {
       final file = File(image.path);
-      // Pastikan service initialized (verbose untuk logging pertama kali)
-      await FoodDetectionService.ensureInitialized(verbose: true);
-      // Run the AI detection service (nama & komponen)
-      final result = await FoodDetectionService.detectFood(file);
-      debugPrint('Detection result: $result');
+      // Langsung panggil backend (server lokal/railway)
+      final result = await NutritionBackendService.analyzeImage(file);
+      debugPrint('Backend detection result: $result');
 
-      if (result['success'] == true) {
-        final List<dynamic>? items = (result['items'] as List?)?.whereType<dynamic>().toList();
-        if (items != null && items.isNotEmpty) {
-          if (items.length == 1) {
-            final top = items.first as Map<String, dynamic>;
-            final String detectedName = (top['name'] ?? 'unknown').toString();
-            final String key = detectedName
-                .toLowerCase()
-                .replaceAll(RegExp(r"[^a-z0-9 ]"), '')
-                .trim()
-                .replaceAll(RegExp(r"\s+"), '_');
-            final nutrition = FoodNutritionDatabase.getNutrition(key);
+      if (result != null) {
+        // Backend returns:
+        // { description: "text", calories: 0, protein: 0, carbs: 0, fat: 0, foodDescription: "..." }
 
-            if (mounted) {
-              setState(() => _isDetecting = false);
-              // Simpan juga ke inline fallback (agar tetap terlihat jika bottom sheet tidak muncul di web)
-              _inlineResults = [
-                {
-                  'name': detectedName,
-                  'confidenceValue': top['confidenceValue'] ?? 0.0,
-                  'confidence': top['confidence'] ?? '0',
-                }
-              ];
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.white,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        final String detectedName = (result['description'] ?? 'unknown')
+            .toString();
+        // Construct dynamic FoodNutrition object from backend result
+        final nutrition = FoodNutrition(
+          name: detectedName,
+          calories: (result['calories'] as num?)?.toInt() ?? 0,
+          protein: (result['protein'] as num?)?.toDouble() ?? 0.0,
+          carbs: (result['carbs'] as num?)?.toDouble() ?? 0.0,
+          fat: (result['fat'] as num?)?.toDouble() ?? 0.0,
+          category: 'API-Backend',
+          description: result['foodDescription'] ?? '',
+          fiber: 0.0,
+          servingSize: '100g',
+        );
+
+        if (mounted) {
+          setState(() => _isDetecting = false);
+          _inlineResults = [
+            {'name': detectedName, 'confidenceValue': 1.0, 'confidence': '100'},
+          ];
+
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            builder: (ctx) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                  left: 16,
+                  right: 16,
+                  top: 24,
                 ),
-                builder: (ctx) {
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(ctx).viewInsets.bottom,
-                      left: 16,
-                      right: 16,
-                      top: 24,
-                    ),
-                    child: _SingleDetectionResultSheet(
-                      originalName: detectedName,
-                      foodKey: key,
-                      confidenceValue: (top['confidenceValue'] as double? ?? 0.0),
-                      nutrition: nutrition,
-                      parentContext: context,
-                    ),
-                  );
-                },
-              );
-            }
-          } else {
-            // Multi-food: ambil nutrisi total dari backend Node API berbasis gambar
-            Map<String, dynamic>? backendNut;
-            try {
-              backendNut = await NutritionBackendService.analyzeImage(file);
-              debugPrint('Backend nutrition result: $backendNut');
-            } catch (e) {
-              debugPrint('Backend nutrition error: $e');
-            }
-
-            if (mounted) {
-              setState(() => _isDetecting = false);
-              // Inline fallback list
-              _inlineResults = items
-                  .whereType<Map>()
-                  .map((e) => {
-                        'name': e['name'] ?? 'unknown',
-                        'confidenceValue': e['confidenceValue'] ?? 0.0,
-                        'confidence': e['confidence'] ?? '0',
-                      })
-                  .cast<Map<String, dynamic>>()
-                  .toList();
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.white,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                child: _SingleDetectionResultSheet(
+                  originalName: detectedName,
+                  foodKey: detectedName,
+                  confidenceValue: 1.0,
+                  nutrition: nutrition,
+                  parentContext: context,
                 ),
-                builder: (ctx) {
-                  return _AggregatedDetectionResultSheet(
-                    items: items,
-                    parentContext: context,
-                    backendNutrition: backendNut,
-                  );
-                },
               );
-            }
-          }
-        } else {
-          // Fallback ke topPrediction lama jika items tidak tersedia
-          final top = result['topPrediction'];
-          String detectedName = top['name'] as String;
-          String key = detectedName
-              .toLowerCase()
-              .replaceAll(RegExp(r"[^a-z0-9 ]"), '')
-              .trim()
-              .replaceAll(RegExp(r"\s+"), '_');
-          final nutrition = FoodNutritionDatabase.getNutrition(key);
-          if (mounted) {
-            setState(() => _isDetecting = false);
-            _inlineResults = [
-              {
-                'name': detectedName,
-                'confidenceValue': top['confidenceValue'] ?? 0.0,
-                'confidence': top['confidence'] ?? '0',
-              }
-            ];
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.white,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              builder: (ctx) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(ctx).viewInsets.bottom,
-                    left: 16,
-                    right: 16,
-                    top: 24,
-                  ),
-                  child: _SingleDetectionResultSheet(
-                    originalName: detectedName,
-                    foodKey: key,
-                    confidenceValue: (top['confidenceValue'] as double? ?? 0.0),
-                    nutrition: nutrition,
-                    parentContext: context,
-                  ),
-                );
-              },
-            );
-          }
+            },
+          );
         }
       } else {
         if (mounted) {
           setState(() => _isDetecting = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Deteksi gagal: ${result['error'] ?? 'Unknown'}'), backgroundColor: Colors.red),
+            const SnackBar(
+              content: Text('Gagal mendeteksi makanan via Backend.'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -299,7 +223,10 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
       if (mounted) {
         setState(() => _isDetecting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Terjadi error saat mendeteksi: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Terjadi error saat mendeteksi: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -329,11 +256,7 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
               child: SafeArea(
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.camera_alt,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
+                    Icon(Icons.camera_alt, color: AppColors.primary, size: 24),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Column(
@@ -344,14 +267,12 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
                           ),
                           Text(
                             'Ambil foto dengan kamera atau pilih dari galeri untuk mendeteksi kalori dan nutrisi secara otomatis',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontSize: 12, color: Colors.black),
                           ),
                         ],
                       ),
@@ -364,12 +285,10 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                 ),
               ),
             ),
-            
+
             // Camera Preview or Error Message
-            Expanded(
-              child: _buildCameraContent(),
-            ),
-            
+            Expanded(child: _buildCameraContent()),
+
             // Bottom Controls
             Container(
               padding: const EdgeInsets.all(20),
@@ -390,10 +309,7 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 3,
-                              ),
+                              border: Border.all(color: Colors.white, width: 3),
                             ),
                             child: const Icon(
                               Icons.camera_alt,
@@ -405,7 +321,7 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    
+
                     // Action Buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -414,10 +330,7 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                           onPressed: () => Navigator.of(context).pop(),
                           child: const Text(
                             'Batal',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
                           ),
                         ),
                         ElevatedButton.icon(
@@ -501,18 +414,11 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: Colors.red,
-                  size: 64,
-                ),
+                const Icon(Icons.error_outline, color: Colors.red, size: 64),
                 const SizedBox(height: 20),
                 Text(
                   _errorMessage!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -529,16 +435,11 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(
-                color: AppColors.primary,
-              ),
+              CircularProgressIndicator(color: AppColors.primary),
               SizedBox(height: 20),
               Text(
                 'Mempersiapkan kamera...',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ],
           ),
@@ -561,7 +462,10 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                     children: [
                       CircularProgressIndicator(color: AppColors.primary),
                       SizedBox(height: 16),
-                      Text('Mendeteksi makanan...', style: TextStyle(color: Colors.white)),
+                      Text(
+                        'Mendeteksi makanan...',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ],
                   ),
                 ),
@@ -573,21 +477,33 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                   width: double.infinity,
                   decoration: const BoxDecoration(
                     color: Colors.black87,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
                   ),
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Hasil Deteksi (Inline Fallback)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Hasil Deteksi (Inline Fallback)',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       for (final item in _inlineResults)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Row(
                             children: [
-                              Icon(Icons.fastfood, color: AppColors.primary, size: 18),
+                              Icon(
+                                Icons.fastfood,
+                                color: AppColors.primary,
+                                size: 18,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -597,7 +513,10 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                               ),
                               Text(
                                 '${item['confidence']}%',
-                                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -607,11 +526,15 @@ class _CameraDetectionModalState extends State<CameraDetectionModal> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
-                            onPressed: () => setState(() => _inlineResults = []),
-                            child: const Text('Sembunyikan', style: TextStyle(color: Colors.white70)),
+                            onPressed: () =>
+                                setState(() => _inlineResults = []),
+                            child: const Text(
+                              'Sembunyikan',
+                              style: TextStyle(color: Colors.white70),
+                            ),
                           ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -639,12 +562,21 @@ class _SingleDetectionResultSheet extends StatefulWidget {
   });
 
   @override
-  State<_SingleDetectionResultSheet> createState() => _SingleDetectionResultSheetState();
+  State<_SingleDetectionResultSheet> createState() =>
+      _SingleDetectionResultSheetState();
 }
 
-class _SingleDetectionResultSheetState extends State<_SingleDetectionResultSheet> {
-  final TextEditingController _portionController = TextEditingController(text: '100');
-  final List<String> _mealTypes = const ['Sarapan', 'Makan Siang', 'Makan Malam', 'Camilan'];
+class _SingleDetectionResultSheetState
+    extends State<_SingleDetectionResultSheet> {
+  final TextEditingController _portionController = TextEditingController(
+    text: '100',
+  );
+  final List<String> _mealTypes = const [
+    'Sarapan',
+    'Makan Siang',
+    'Makan Malam',
+    'Camilan',
+  ];
   late String _selectedType;
   FoodNutrition? _nutrition; // dynamic (local or API)
   bool _loadingNut = false;
@@ -669,17 +601,23 @@ class _SingleDetectionResultSheetState extends State<_SingleDetectionResultSheet
       _fetchNutrition();
     }
   }
+
   int _parsePortion() {
     final v = int.tryParse(_portionController.text.trim());
     if (v == null || v <= 0) return 100;
     return v > 2000 ? 2000 : v;
   }
+
   int _calcCalories(int grams) {
     if (_nutrition == null) return 0;
     return ((_nutrition!.calories * grams) / 100).round();
   }
+
   Future<void> _fetchNutrition() async {
-    setState(() { _loadingNut = true; _nutError = false; });
+    setState(() {
+      _loadingNut = true;
+      _nutError = false;
+    });
     final data = await NutritionApiService.searchNutrition(widget.originalName);
     if (!mounted) return;
     if (data != null) {
@@ -688,8 +626,11 @@ class _SingleDetectionResultSheetState extends State<_SingleDetectionResultSheet
     } else {
       _nutError = true;
     }
-    setState(() { _loadingNut = false; });
+    setState(() {
+      _loadingNut = false;
+    });
   }
+
   @override
   Widget build(BuildContext context) {
     final portion = _parsePortion();
@@ -718,43 +659,90 @@ class _SingleDetectionResultSheetState extends State<_SingleDetectionResultSheet
               Expanded(
                 child: Text(
                   widget.originalName,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: Colors.green[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text('Conf: $confPct%'),
+                child: Text(
+                  'Conf: $confPct%',
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           if (_nutrition != null) ...[
-            Text('Kalori (100g): ${_nutrition!.calories} kkal'),
-            Text('Protein: ${_nutrition!.protein} g | Karbo: ${_nutrition!.carbs} g | Lemak: ${_nutrition!.fat} g'),
-            if (_nutrition!.category == 'API') const Text('(Sumber: API Gemini)', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              'Kalori (100g): ${_nutrition!.calories} kkal',
+              style: const TextStyle(color: Colors.black),
+            ),
+            Text(
+              'Protein: ${_nutrition!.protein} g | Karbo: ${_nutrition!.carbs} g | Lemak: ${_nutrition!.fat} g',
+              style: const TextStyle(color: Colors.black),
+            ),
+            if (_nutrition!.category == 'API')
+              const Text(
+                '(Sumber: API Gemini)',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
           ] else if (_loadingNut) ...[
             const SizedBox(height: 8),
-            const Row(children: [SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)), SizedBox(width:8), Text('Mengambil nutrisi...')]),
+            const Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 8),
+                Text('Mengambil nutrisi...'),
+              ],
+            ),
           ] else ...[
             if (_nutError) const Text('Gagal mengambil nutrisi dari API.'),
-            const Text('Data nutrisi tidak ditemukan. Estimasi kalori berdasarkan porsi manual.'),
-            TextButton(onPressed: _fetchNutrition, child: const Text('Coba Ambil Nutrisi')),
+            const Text(
+              'Data nutrisi tidak ditemukan. Estimasi kalori berdasarkan porsi manual.',
+            ),
+            TextButton(
+              onPressed: _fetchNutrition,
+              child: const Text('Coba Ambil Nutrisi'),
+            ),
           ],
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: _selectedType,
             items: _mealTypes
-                .map((t) => DropdownMenuItem<String>(value: t, child: Text(t)))
+                .map(
+                  (t) => DropdownMenuItem<String>(
+                    value: t,
+                    child: Text(t, style: const TextStyle(color: Colors.black)),
+                  ),
+                )
                 .toList(),
             onChanged: (val) {
               if (val != null) setState(() => _selectedType = val);
             },
+            style: const TextStyle(color: Colors.black),
+            dropdownColor: Colors.white,
             decoration: const InputDecoration(
               labelText: 'Jenis Makan',
+              labelStyle: TextStyle(color: Colors.black),
               border: OutlineInputBorder(),
               isDense: true,
             ),
@@ -764,10 +752,12 @@ class _SingleDetectionResultSheetState extends State<_SingleDetectionResultSheet
             children: [
               Expanded(
                 child: TextField(
+                  style: const TextStyle(color: Colors.black),
                   controller: _portionController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Porsi (gram)',
+                    labelStyle: const TextStyle(color: Colors.black),
                     border: const OutlineInputBorder(),
                     isDense: true,
                     suffixIcon: IconButton(
@@ -786,8 +776,17 @@ class _SingleDetectionResultSheetState extends State<_SingleDetectionResultSheet
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Estimasi Kalori', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text('$calories kkal'),
+                  const Text(
+                    'Estimasi Kalori',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    '$calories kkal',
+                    style: const TextStyle(color: Colors.black),
+                  ),
                 ],
               ),
             ],
@@ -803,52 +802,62 @@ class _SingleDetectionResultSheetState extends State<_SingleDetectionResultSheet
               const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () {
-                              final auth = AuthService();
-                              final userId = auth.currentUser?.id ?? 'demo';
-                              final uds = UserDataService();
+                  final auth = AuthService();
+                  final userId = auth.currentUser?.id ?? 'demo';
+                  final uds = UserDataService();
 
-                              // Hitung makro per porsi jika tersedia
-                              int protein = 0;
-                              int carbs = 0;
-                              int fat = 0;
-                              if (_nutrition != null) {
-                                protein = ((_nutrition!.protein * portion) / 100).round();
-                                carbs = ((_nutrition!.carbs * portion) / 100).round();
-                                fat = ((_nutrition!.fat * portion) / 100).round();
-                              }
+                  // Hitung makro per porsi jika tersedia
+                  int protein = 0;
+                  int carbs = 0;
+                  int fat = 0;
+                  if (_nutrition != null) {
+                    protein = ((_nutrition!.protein * portion) / 100).round();
+                    carbs = ((_nutrition!.carbs * portion) / 100).round();
+                    fat = ((_nutrition!.fat * portion) / 100).round();
+                  }
 
-                              uds.addMeal(userId, Meal(
-                                name: widget.originalName,
-                                    type: _selectedType,
-                                time: DateTime.now().toIso8601String(),
-                                calories: calories,
-                                protein: protein,
-                                carbs: carbs,
-                                fat: fat,
-                              ));
+                  uds.addMeal(
+                    userId,
+                    Meal(
+                      name: widget.originalName,
+                      type: _selectedType,
+                      time: DateTime.now().toIso8601String(),
+                      calories: calories,
+                      protein: protein,
+                      carbs: carbs,
+                      fat: fat,
+                    ),
+                  );
 
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Disimpan: ${widget.originalName} ($calories kkal, porsi $portion g)'),
-                                  backgroundColor: AppColors.primary,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                              // Tutup juga modal kamera (parent)
-                              Future.microtask(() {
-                                if (Navigator.of(widget.parentContext).canPop()) {
-                                  Navigator.of(widget.parentContext).pop();
-                                }
-                              });
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Disimpan: ${widget.originalName} ($calories kkal, porsi $portion g)',
+                      ),
+                      backgroundColor: AppColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  // Tutup juga modal kamera (parent)
+                  Future.microtask(() {
+                    if (Navigator.of(widget.parentContext).canPop()) {
+                      Navigator.of(widget.parentContext).pop();
+                    }
+                  });
                 },
                 icon: const Icon(Icons.check_circle),
                 label: const Text('Konfirmasi'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -863,14 +872,20 @@ class _SingleDetectionResultSheetState extends State<_SingleDetectionResultSheet
 // Bottom sheet for multi-food detection results
 class _MultiDetectionResultSheet extends StatefulWidget {
   final List<dynamic> items; // list of maps {name, confidenceValue, ...}
-  final BuildContext parentContext; // context kamera untuk ditutup setelah semua tersimpan
-  const _MultiDetectionResultSheet({required this.items, required this.parentContext});
+  final BuildContext
+  parentContext; // context kamera untuk ditutup setelah semua tersimpan
+  const _MultiDetectionResultSheet({
+    required this.items,
+    required this.parentContext,
+  });
 
   @override
-  State<_MultiDetectionResultSheet> createState() => _MultiDetectionResultSheetState();
+  State<_MultiDetectionResultSheet> createState() =>
+      _MultiDetectionResultSheetState();
 }
 
-class _MultiDetectionResultSheetState extends State<_MultiDetectionResultSheet> {
+class _MultiDetectionResultSheetState
+    extends State<_MultiDetectionResultSheet> {
   int _savedCount = 0;
 
   String _normalizeKey(String name) => name
@@ -932,22 +947,29 @@ class _MultiDetectionResultSheetState extends State<_MultiDetectionResultSheet> 
                         int carbs = 0;
                         int fat = 0;
                         if (nutrition != null) {
-                          protein = ((nutrition.protein * portionGrams) / 100).round();
-                          carbs = ((nutrition.carbs * portionGrams) / 100).round();
+                          protein = ((nutrition.protein * portionGrams) / 100)
+                              .round();
+                          carbs = ((nutrition.carbs * portionGrams) / 100)
+                              .round();
                           fat = ((nutrition.fat * portionGrams) / 100).round();
                         }
-                        uds.addMeal(userId, Meal(
-                          name: name,
-                          type: 'Lainnya',
-                          time: DateTime.now().toIso8601String(),
-                          calories: estCalories,
-                          protein: protein,
-                          carbs: carbs,
-                          fat: fat,
-                        ));
+                        uds.addMeal(
+                          userId,
+                          Meal(
+                            name: name,
+                            type: 'Lainnya',
+                            time: DateTime.now().toIso8601String(),
+                            calories: estCalories,
+                            protein: protein,
+                            carbs: carbs,
+                            fat: fat,
+                          ),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Disimpan: $name ($estCalories kkal, porsi $portionGrams g)'),
+                            content: Text(
+                              'Disimpan: $name ($estCalories kkal, porsi $portionGrams g)',
+                            ),
                             backgroundColor: AppColors.primary,
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -996,13 +1018,19 @@ class _AggregatedDetectionResultSheet extends StatefulWidget {
   final List<dynamic> items;
   final BuildContext parentContext;
   final Map<String, dynamic>? backendNutrition;
-  const _AggregatedDetectionResultSheet({required this.items, required this.parentContext, this.backendNutrition});
+  const _AggregatedDetectionResultSheet({
+    required this.items,
+    required this.parentContext,
+    this.backendNutrition,
+  });
 
   @override
-  State<_AggregatedDetectionResultSheet> createState() => _AggregatedDetectionResultSheetState();
+  State<_AggregatedDetectionResultSheet> createState() =>
+      _AggregatedDetectionResultSheetState();
 }
 
-class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionResultSheet> {
+class _AggregatedDetectionResultSheetState
+    extends State<_AggregatedDetectionResultSheet> {
   late TextEditingController _portionController;
   String _mealType = 'Lainnya';
   int _calories = 0;
@@ -1017,9 +1045,9 @@ class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionRes
     super.initState();
     _portionController = TextEditingController(text: '100');
     _components = widget.items
-      .whereType<Map<String, dynamic>>()
-      .map((e) => (e['name'] ?? 'unknown').toString())
-      .toList();
+        .whereType<Map<String, dynamic>>()
+        .map((e) => (e['name'] ?? 'unknown').toString())
+        .toList();
     _displayName = _deriveName(_components);
     _mealType = _suggestMealType();
     if (widget.backendNutrition != null) {
@@ -1044,7 +1072,10 @@ class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionRes
     if (lower.any((e) => e.contains('salad'))) return 'Salad';
     if (lower.any((e) => e.contains('burger'))) return 'Burger';
     final first = comps.first.replaceAll('_', ' ');
-    return first.split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
+    return first
+        .split(' ')
+        .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+        .join(' ');
   }
 
   int _parsePortion() {
@@ -1071,7 +1102,11 @@ class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionRes
     final portion = _parsePortion();
     int cal = 0, p = 0, c = 0, f = 0;
     for (final comp in _components) {
-      final key = comp.toLowerCase().replaceAll(RegExp(r"[^a-z0-9 ]"), '').trim().replaceAll(RegExp(r"\s+"), '_');
+      final key = comp
+          .toLowerCase()
+          .replaceAll(RegExp(r"[^a-z0-9 ]"), '')
+          .trim()
+          .replaceAll(RegExp(r"\s+"), '_');
       final nut = FoodNutritionDatabase.getNutrition(key);
       if (nut != null) {
         cal += ((nut.calories * portion) / 100).round();
@@ -1117,12 +1152,24 @@ class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionRes
               ),
             ),
             const SizedBox(height: 12),
-            Text('Hasil Deteksi (Gabungan)', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'Hasil Deteksi (Gabungan)',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
               runSpacing: -4,
-              children: _components.map((c) => Chip(label: Text(c.replaceAll('_', ' ')))).toList(),
+              children: _components
+                  .map(
+                    (c) => Chip(
+                      label: Text(
+                        c.replaceAll('_', ' '),
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
             const SizedBox(height: 16),
             Row(
@@ -1132,19 +1179,51 @@ class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionRes
                     value: _mealType,
                     decoration: const InputDecoration(labelText: 'Jenis Makan'),
                     items: const [
-                      DropdownMenuItem(value: 'Sarapan', child: Text('Sarapan')),
-                      DropdownMenuItem(value: 'Makan Siang', child: Text('Makan Siang')),
-                      DropdownMenuItem(value: 'Makan Malam', child: Text('Makan Malam')),
-                      DropdownMenuItem(value: 'Camilan', child: Text('Camilan')),
-                      DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
+                      DropdownMenuItem(
+                        value: 'Sarapan',
+                        child: Text(
+                          'Sarapan',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Makan Siang',
+                        child: Text(
+                          'Makan Siang',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Makan Malam',
+                        child: Text(
+                          'Makan Malam',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Camilan',
+                        child: Text(
+                          'Camilan',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Lainnya',
+                        child: Text(
+                          'Lainnya',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
                     ],
-                    onChanged: (v) => setState(() => _mealType = v ?? _mealType),
+                    onChanged: (v) =>
+                        setState(() => _mealType = v ?? _mealType),
                   ),
                 ),
                 const SizedBox(width: 12),
                 SizedBox(
                   width: 100,
                   child: TextField(
+                    style: const TextStyle(color: Colors.black),
                     controller: _portionController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(labelText: 'Porsi (g)'),
@@ -1163,16 +1242,31 @@ class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionRes
             Card(
               elevation: 0,
               color: Colors.grey.shade100,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_displayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      _displayName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Text('Estimasi Kalori Total: $_calories kkal'),
-                    Text('Protein: $_protein g, Karbo: $_carbs g, Lemak: $_fat g'),
+                    Text(
+                      'Estimasi Kalori Total: $_calories kkal',
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    Text(
+                      'Protein: $_protein g, Karbo: $_carbs g, Lemak: $_fat g',
+                      style: const TextStyle(color: Colors.black),
+                    ),
                   ],
                 ),
               ),
@@ -1187,20 +1281,25 @@ class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionRes
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () {
                   final portion = _parsePortion();
-                  uds.addMeal(userId, Meal(
-                    name: _displayName,
-                    type: _mealType,
-                    time: DateTime.now().toIso8601String(),
-                    calories: _calories,
-                    protein: _protein,
-                    carbs: _carbs,
-                    fat: _fat,
-                    components: _components,
-                  ));
+                  uds.addMeal(
+                    userId,
+                    Meal(
+                      name: _displayName,
+                      type: _mealType,
+                      time: DateTime.now().toIso8601String(),
+                      calories: _calories,
+                      protein: _protein,
+                      carbs: _carbs,
+                      fat: _fat,
+                      components: _components,
+                    ),
+                  );
                   Navigator.pop(context); // close sheet
                   Future.microtask(() {
                     if (Navigator.of(widget.parentContext).canPop()) {
@@ -1209,7 +1308,9 @@ class _AggregatedDetectionResultSheetState extends State<_AggregatedDetectionRes
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Disimpan: $_displayName ($_calories kkal, porsi $portion g)'),
+                      content: Text(
+                        'Disimpan: $_displayName ($_calories kkal, porsi $portion g)',
+                      ),
                       backgroundColor: AppColors.primary,
                       behavior: SnackBarBehavior.floating,
                     ),

@@ -91,28 +91,28 @@ class AppTextStyles {
     color: AppColors.textPrimary,
     height: 1.2,
   );
-  
+
   static const TextStyle h2 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
     height: 1.3,
   );
-  
+
   static const TextStyle h3 = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     height: 1.4,
   );
-  
+
   static const TextStyle h4 = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     height: 1.4,
   );
-  
+
   // Body Text
   static const TextStyle body1 = TextStyle(
     fontSize: 16,
@@ -120,14 +120,14 @@ class AppTextStyles {
     color: AppColors.textPrimary,
     height: 1.5,
   );
-  
+
   static const TextStyle body2 = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.textSecondary,
     height: 1.5,
   );
-  
+
   // Caption & Small
   static const TextStyle caption = TextStyle(
     fontSize: 12,
@@ -135,14 +135,14 @@ class AppTextStyles {
     color: AppColors.textSecondary,
     height: 1.4,
   );
-  
+
   static const TextStyle small = TextStyle(
     fontSize: 10,
     fontWeight: FontWeight.normal,
     color: AppColors.textLight,
     height: 1.4,
   );
-  
+
   // Button Text
   static const TextStyle button = TextStyle(
     fontSize: 16,
@@ -150,7 +150,7 @@ class AppTextStyles {
     color: AppColors.textWhite,
     letterSpacing: 0.5,
   );
-  
+
   // Special
   static const TextStyle number = TextStyle(
     fontSize: 48,
@@ -187,7 +187,7 @@ class AppShadow {
       offset: const Offset(0, 2),
     ),
   ];
-  
+
   static List<BoxShadow> medium = [
     BoxShadow(
       color: Colors.black.withOpacity(0.08),
@@ -195,7 +195,7 @@ class AppShadow {
       offset: const Offset(0, 4),
     ),
   ];
-  
+
   static List<BoxShadow> large = [
     BoxShadow(
       color: Colors.black.withOpacity(0.1),

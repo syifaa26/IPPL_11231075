@@ -13,7 +13,11 @@ app.use(express.json({ limit: '10mb' }));
 console.log("Loading routes...");
 app.use('/api/ai', require('./routes/analyze-image'));
 
+app.get('/', (req, res) => {
+    res.send('Nutrix Backend is Running!');
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log("Server berjalan di port " + PORT);
 });

@@ -58,101 +58,99 @@ class _NutrixAppState extends State<NutrixApp> {
       animation: _themeService,
       builder: (context, _) {
         return MaterialApp(
-      title: 'Nutrix',
-      themeMode: _themeService.themeMode,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          primary: AppColors.primary,
-          secondary: AppColors.secondary,
-          background: AppColors.background,
-        ),
-        scaffoldBackgroundColor: AppColors.background,
-        fontFamily: 'SF Pro Display',
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: AppColors.textPrimary),
-        ),
-        cardTheme: CardThemeData(
-          color: AppColors.card,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textWhite,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
+          title: 'Nutrix',
+          themeMode: _themeService.themeMode,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primary,
+              primary: AppColors.primary,
+              secondary: AppColors.secondary,
+              background: AppColors.background,
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+            scaffoldBackgroundColor: AppColors.background,
+            fontFamily: 'SF Pro Display',
+            useMaterial3: true,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: IconThemeData(color: AppColors.textPrimary),
             ),
-            textStyle: AppTextStyles.button,
-          ),
-        ),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          brightness: Brightness.dark,
-          seedColor: AppColors.primary,
-          primary: AppColors.primary,
-          secondary: AppColors.secondary,
-          background: AppColors.darkBackground,
-        ),
-        scaffoldBackgroundColor: AppColors.darkBackground,
-        fontFamily: 'SF Pro Display',
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: AppColors.darkTextPrimary),
-        ),
-        cardTheme: CardThemeData(
-          color: AppColors.darkCard,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textWhite,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
+            cardTheme: CardThemeData(
+              color: AppColors.card,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textWhite,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                textStyle: AppTextStyles.button,
+              ),
             ),
-            textStyle: AppTextStyles.button,
           ),
-        ),
-      ),
-      debugShowCheckedModeBanner: false,
-      routes: {
-        '/home': (_) => const NutrixHome(),
-      },
-      home: Builder(
-        builder: (innerContext) {
-          return LandingPage(
-            onGetStarted: () {
-              Navigator.of(innerContext).pushReplacement(
-                MaterialPageRoute(builder: (_) => const AuthScreen()),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              brightness: Brightness.dark,
+              seedColor: AppColors.primary,
+              primary: AppColors.primary,
+              secondary: AppColors.secondary,
+              background: AppColors.darkBackground,
+            ),
+            scaffoldBackgroundColor: AppColors.darkBackground,
+            fontFamily: 'SF Pro Display',
+            useMaterial3: true,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: IconThemeData(color: AppColors.darkTextPrimary),
+            ),
+            cardTheme: CardThemeData(
+              color: AppColors.darkCard,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textWhite,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                textStyle: AppTextStyles.button,
+              ),
+            ),
+          ),
+          debugShowCheckedModeBanner: false,
+          routes: {'/home': (_) => const NutrixHome()},
+          home: Builder(
+            builder: (innerContext) {
+              return LandingPage(
+                onGetStarted: () {
+                  Navigator.of(innerContext).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const AuthScreen()),
+                  );
+                },
               );
             },
-          );
-        },
-      ),
-    );
+          ),
+        );
       },
     );
   }
@@ -164,6 +162,7 @@ class NutrixHome extends StatefulWidget {
   @override
   State<NutrixHome> createState() => _NutrixHomeState();
 }
+
 // Beranda utama aplikasi Nutrix
 class _NutrixHomeState extends State<NutrixHome> {
   int _selectedIndex = 0;
@@ -248,8 +247,8 @@ class _NutrixHomeState extends State<NutrixHome> {
                         ),
                       ),
                       child: Icon(
-                        _selectedIndex == 1 
-                            ? Icons.bar_chart_rounded 
+                        _selectedIndex == 1
+                            ? Icons.bar_chart_rounded
                             : Icons.restaurant_menu_rounded,
                         color: AppColors.textWhite,
                         size: 28,
@@ -261,19 +260,17 @@ class _NutrixHomeState extends State<NutrixHome> {
             ),
             // Main Content
             Expanded(
-              child: _selectedIndex == 0 
-                  ? _buildHomeContent() 
-                  : _selectedIndex == 1 
-                      ? const StatisticsScreen() 
-                      : _buildProfileContent(),
+              child: _selectedIndex == 0
+                  ? _buildHomeContent()
+                  : _selectedIndex == 1
+                  ? const StatisticsScreen()
+                  : _buildProfileContent(),
             ),
           ],
         ),
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: AppShadow.medium,
-        ),
+        decoration: BoxDecoration(boxShadow: AppShadow.medium),
         child: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
@@ -304,7 +301,7 @@ class _NutrixHomeState extends State<NutrixHome> {
       ),
     );
   }
-  
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
@@ -322,7 +319,7 @@ class _NutrixHomeState extends State<NutrixHome> {
   String _formatTime(String raw) {
     try {
       final dt = DateTime.parse(raw);
-      return '${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } catch (_) {
       final match = RegExp(r'(\d{2}:\d{2})').firstMatch(raw);
       return match?.group(1) ?? raw;
@@ -333,7 +330,7 @@ class _NutrixHomeState extends State<NutrixHome> {
     final authService = AuthService();
     final currentUser = authService.currentUser;
     final userDataService = _userDataService; // use listening instance
-    
+
     // Get user data
     final userId = currentUser?.id ?? 'demo';
     final totalCalories = userDataService.getTotalCalories(userId);
@@ -342,10 +339,12 @@ class _NutrixHomeState extends State<NutrixHome> {
     final totalProtein = userDataService.getCalorieData(userId).totalProtein;
     final totalCarbs = userDataService.getCalorieData(userId).totalCarbs;
     final meals = userDataService.getMeals(userId);
-    
+
     // Calculate progress
-    final progress = targetCalories > 0 ? (totalCalories / targetCalories).clamp(0.0, 1.0) : 0.0;
-    
+    final progress = targetCalories > 0
+        ? (totalCalories / targetCalories).clamp(0.0, 1.0)
+        : 0.0;
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -392,7 +391,12 @@ class _NutrixHomeState extends State<NutrixHome> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text('kkal', style: AppTextStyles.body2.copyWith(color: AppColors.textWhite.withOpacity(0.85))),
+                Text(
+                  'kkal',
+                  style: AppTextStyles.body2.copyWith(
+                    color: AppColors.textWhite.withOpacity(0.85),
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.md),
                 // Centered progress bar with subtle glow
                 Align(
@@ -428,9 +432,24 @@ class _NutrixHomeState extends State<NutrixHome> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildModernMacroItem(Icons.emoji_events_rounded, remainingCalories.toString(), 'Sisa', AppColors.textWhite),
-                    _buildModernMacroItem(Icons.fitness_center_rounded, '${totalProtein}g', 'Protein', AppColors.textWhite),
-                    _buildModernMacroItem(Icons.bakery_dining_rounded, '${totalCarbs}g', 'Karbo', AppColors.textWhite),
+                    _buildModernMacroItem(
+                      Icons.emoji_events_rounded,
+                      remainingCalories.toString(),
+                      'Sisa',
+                      AppColors.textWhite,
+                    ),
+                    _buildModernMacroItem(
+                      Icons.fitness_center_rounded,
+                      '${totalProtein}g',
+                      'Protein',
+                      AppColors.textWhite,
+                    ),
+                    _buildModernMacroItem(
+                      Icons.bakery_dining_rounded,
+                      '${totalCarbs}g',
+                      'Karbo',
+                      AppColors.textWhite,
+                    ),
                   ],
                 ),
               ],
@@ -476,10 +495,17 @@ class _NutrixHomeState extends State<NutrixHome> {
                       color: AppColors.textWhite.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: const Icon(Icons.camera_alt_rounded, color: AppColors.textWhite, size: 20),
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      color: AppColors.textWhite,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  Text('Tambah Makanan', style: AppTextStyles.button.copyWith(fontSize: 16)),
+                  Text(
+                    'Tambah Makanan',
+                    style: AppTextStyles.button.copyWith(fontSize: 16),
+                  ),
                 ],
               ),
             ),
@@ -497,12 +523,21 @@ class _NutrixHomeState extends State<NutrixHome> {
                     Text('Makanan Hari Ini', style: AppTextStyles.h3),
                     if (meals.isNotEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(AppRadius.full),
                         ),
-                        child: Text('${meals.length} item', style: AppTextStyles.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                        child: Text(
+                          '${meals.length} item',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -510,7 +545,10 @@ class _NutrixHomeState extends State<NutrixHome> {
                 meals.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl, horizontal: AppSpacing.lg),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.xl,
+                            horizontal: AppSpacing.lg,
+                          ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
@@ -522,12 +560,29 @@ class _NutrixHomeState extends State<NutrixHome> {
                                   color: AppColors.primary.withOpacity(0.15),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.restaurant_menu_rounded, size: 48, color: AppColors.primary),
+                                child: const Icon(
+                                  Icons.restaurant_menu_rounded,
+                                  size: 48,
+                                  color: AppColors.primary,
+                                ),
                               ),
                               const SizedBox(height: AppSpacing.md),
-                              Text('Belum ada makanan hari ini', style: AppTextStyles.body1.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+                              Text(
+                                'Belum ada makanan hari ini',
+                                style: AppTextStyles.body1.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                               const SizedBox(height: 4),
-                              Text('Tap "Tambah Makanan" untuk memulai', style: AppTextStyles.body2.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
+                              Text(
+                                'Tap "Tambah Makanan" untuk memulai',
+                                style: AppTextStyles.body2.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ],
                           ),
                         ),
@@ -561,11 +616,7 @@ class _NutrixHomeState extends State<NutrixHome> {
   ) {
     return Column(
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: textColor.withOpacity(0.8),
-        ),
+        Icon(icon, size: 20, color: textColor.withOpacity(0.8)),
         const SizedBox(height: AppSpacing.xs),
         Text(
           value,
@@ -614,7 +665,9 @@ class _NutrixHomeState extends State<NutrixHome> {
           isScrollControlled: true,
           backgroundColor: Colors.white,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           builder: (ctx) {
             return SafeArea(
@@ -639,15 +692,32 @@ class _NutrixHomeState extends State<NutrixHome> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.access_time_rounded, size: 16, color: AppColors.textSecondary),
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 16,
+                          color: AppColors.textSecondary,
+                        ),
                         const SizedBox(width: 4),
-                        Text(timeOnly, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                        Text(
+                          timeOnly,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Chip(label: Text(meal.type), backgroundColor: typeColor.withOpacity(0.15)),
+                        Chip(
+                          label: Text(meal.type),
+                          backgroundColor: typeColor.withOpacity(0.15),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Text('Kalori: ${meal.calories} kkal', style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.w600)),
+                    Text(
+                      'Kalori: ${meal.calories} kkal',
+                      style: AppTextStyles.body1.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -657,15 +727,23 @@ class _NutrixHomeState extends State<NutrixHome> {
                         _macroPill('Lemak', meal.fat, Colors.orange),
                       ],
                     ),
-                    if (meal.components != null && meal.components!.isNotEmpty) ...[
+                    if (meal.components != null &&
+                        meal.components!.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      Text('Komponen', style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.w600)),
+                      Text(
+                        'Komponen',
+                        style: AppTextStyles.body1.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 6,
                         runSpacing: -4,
                         children: meal.components!
-                            .map((c) => Chip(label: Text(c.replaceAll('_', ' '))))
+                            .map(
+                              (c) => Chip(label: Text(c.replaceAll('_', ' '))),
+                            )
                             .toList(),
                       ),
                     ],
@@ -678,12 +756,18 @@ class _NutrixHomeState extends State<NutrixHome> {
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.md),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: AppShadow.small,
-          border: Border.all(color: AppColors.primary.withOpacity(0.08), width: 1),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.08),
+            width: 1,
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -717,9 +801,14 @@ class _NutrixHomeState extends State<NutrixHome> {
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [typeColor, typeColor.withOpacity(0.75)]),
+                          gradient: LinearGradient(
+                            colors: [typeColor, typeColor.withOpacity(0.75)],
+                          ),
                           borderRadius: BorderRadius.circular(AppRadius.full),
                         ),
                         child: Text(
@@ -737,9 +826,18 @@ class _NutrixHomeState extends State<NutrixHome> {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.access_time_rounded, size: 14, color: AppColors.textSecondary),
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 4),
-                      Text(timeOnly, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                      Text(
+                        timeOnly,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -747,7 +845,10 @@ class _NutrixHomeState extends State<NutrixHome> {
             ),
             const SizedBox(width: AppSpacing.md),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(AppRadius.md),
@@ -790,7 +891,13 @@ class _NutrixHomeState extends State<NutrixHome> {
         children: [
           CircleAvatar(radius: 4, backgroundColor: color),
           const SizedBox(width: 6),
-          Text('$label: $value g', style: AppTextStyles.caption.copyWith(color: color, fontWeight: FontWeight.w600)),
+          Text(
+            '$label: $value g',
+            style: AppTextStyles.caption.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

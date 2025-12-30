@@ -1,4 +1,4 @@
-package com.example.project
+package com.nutrix.app
 
 import android.Manifest
 import android.content.Intent
